@@ -4,3 +4,4 @@ import Order from "../Order";
 export const Route = createLazyFileRoute("/order")({
   component: Order,
 });
+

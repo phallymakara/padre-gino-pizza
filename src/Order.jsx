@@ -35,9 +35,11 @@ export default function Order() {
   let price, selectedPizza;
   if (!loading) {
     selectedPizza = pizzaTypes.find((pizza) => pizzaType === pizza.id);
-    price = intl.format(
-      selectedPizza.sizes ? selectedPizza.sizes[pizzaSize] : "",
-    );
+    if (selectedPizza) {
+      price = intl.format(
+        selectedPizza.sizes ? selectedPizza.sizes[pizzaSize] : 0,
+      );
+    }
   }
 
   useEffect(() => {
@@ -45,10 +47,15 @@ export default function Order() {
   }, []);
 
   async function fetchPizzaTypes() {
-    const pizzasRes = await fetch("/api/pizzas");
-    const pizzasJson = await pizzasRes.json();
-    setPizzaTypes(pizzasJson);
-    setLoading(false);
+    try {
+      const pizzasRes = await fetch("/api/pizzas");
+      if (!pizzasRes.ok) throw new Error("Network response was not ok");
+      const pizzasJson = await pizzasRes.json();
+      setPizzaTypes(pizzasJson);
+      setLoading(false);
+    } catch (error) {
+      console.error("Failed to fetch pizza types:", error);
+    }
   }
 
   return (
@@ -58,10 +65,12 @@ export default function Order() {
         <form
           onSubmit={(e) => {
             e.preventDefault();
-            setCart([
-              ...cart,
-              { pizza: selectedPizza, size: pizzaSize, price },
-            ]);
+            if (selectedPizza) {
+              setCart([
+                ...cart,
+                { pizza: selectedPizza, size: pizzaSize, price },
+              ]);
+            }
           }}>
           <div>
             <div>
@@ -119,7 +128,8 @@ export default function Order() {
           </div>
           {loading ?
             <h3>LOADING …</h3>
-          : <div className="order-pizza">
+          : selectedPizza ?
+            <div className="order-pizza">
               <Pizza
                 name={selectedPizza.name}
                 description={selectedPizza.description}
@@ -127,7 +137,7 @@ export default function Order() {
               />
               <p>{price}</p>
             </div>
-          }
+          : null}
         </form>
       </div>
       {loading ?
